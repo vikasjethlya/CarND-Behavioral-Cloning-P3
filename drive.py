@@ -44,27 +44,31 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
-controller.set_desired(set_speed)
-
+#set_speed = 30
+#controller.set_desired(set_speed)
+def get_throttle(speed, angle):
+    if abs(speed) > 20 or abs(angle) > 0.15:
+        return 0.1
+    else:
+        return 0.3
 
 @sio.on('telemetry')
 def telemetry(sid, data):
     if data:
         # The current steering angle of the car
-        steering_angle = data["steering_angle"]
+        steering_angle = float(data["steering_angle"])
         # The current throttle of the car
         throttle = data["throttle"]
         # The current speed of the car
-        speed = data["speed"]
+        speed = float(data["speed"])
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
-        throttle = controller.update(float(speed))
-
+        #throttle = controller.update(float(speed))
+        throttle = get_throttle(speed, steering_angle)
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
